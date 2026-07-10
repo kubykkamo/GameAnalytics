@@ -1,0 +1,11 @@
+@GameAnalytics_HostAddress = http://localhost:5184
+
+GET {{GameAnalytics_HostAddress}}/todos/
+Accept: application/json
+
+###
+
+GET {{GameAnalytics_HostAddress}}/todos/1
+Accept: application/json
+
+###
