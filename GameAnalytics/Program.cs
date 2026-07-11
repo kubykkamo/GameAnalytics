@@ -1,4 +1,5 @@
 using GameAnalytics.Data;
+using GameAnalytics.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddHttpClient<RiotApiService>();
 
 var app = builder.Build();
 
