@@ -23,8 +23,8 @@
             var safeGameName = Uri.EscapeDataString(gameName);
             var safeTagLine = Uri.EscapeDataString(tagLine);
 
-            
-            var url = $"https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/{safeGameName}/{safeTagLine}";
+
+            var url = $"https://api.henrikdev.xyz/valorant/v1/stored-matches/eu/{safeGameName}/{safeTagLine}";
 
             var response = await _httpClient.GetAsync(url);
 
@@ -33,7 +33,20 @@
                 return await response.Content.ReadAsStringAsync();
             }
 
-           
+
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"HenrikDev API chyba: {response.StatusCode} - {error}");
+        }
+
+        public async Task<string?> GetMatchDetails(string matchId)
+        {
+            var safeMatchId = Uri.EscapeDataString(matchId);
+            var url = $"https://api.henrikdev.xyz/valorant/v4/match/eu/{safeMatchId}";
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
             var error = await response.Content.ReadAsStringAsync();
             throw new Exception($"HenrikDev API chyba: {response.StatusCode} - {error}");
         }

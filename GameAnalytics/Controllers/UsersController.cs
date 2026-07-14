@@ -44,7 +44,7 @@ namespace GameAnalytics.Controllers
 
     
 
-        [HttpGet("matches/{gameName}/{tagLine}")]
+        [HttpGet("match-history/{gameName}/{tagLine}")]
 
         public async Task<IActionResult> GetMatches(string gameName, string tagLine)
         {
@@ -56,6 +56,20 @@ namespace GameAnalytics.Controllers
             else
             {
                 return NotFound("No matches found!");
+            }
+        }
+
+        [HttpGet("match-details/{matchId}")]
+        public async Task<IActionResult> GetMatchDetails(string matchId)
+        {
+            var matchDetails = await _riotApiService.GetMatchDetails(matchId);
+            if (matchDetails != null)
+            {
+                return Ok(matchDetails);
+            }
+            else
+            {
+                return NotFound("Match details not found!");
             }
         }
     }
