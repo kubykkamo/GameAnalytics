@@ -105,8 +105,6 @@ namespace GameAnalytics.Controllers
                 return BadRequest("Missing required parameters.");
             }
 
-            var details = await _riotApiService.GetMatchDetails(matchId);
-
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
             if (puuid == null)
@@ -119,8 +117,7 @@ namespace GameAnalytics.Controllers
 
             var matchStatistics = _analyser.CalculateMatchStatistics(playerStats);
 
-            if (matchStatistics == null)
-                return NotFound("Match statistics not found.");
+            
 
             return Ok(matchStatistics);
         }

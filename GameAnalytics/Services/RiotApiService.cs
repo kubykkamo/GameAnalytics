@@ -90,28 +90,41 @@ namespace GameAnalytics.Services
 
         public async Task<PlayerStatsDto?> GetPlayerStats(string matchId, string puuid)
         {
+            if (string.IsNullOrEmpty(matchId) || string.IsNullOrEmpty(puuid))
+            {
+                return null;
+            }
+
             var safeMatchId = Uri.EscapeDataString(matchId);
-            var safePuuid = Uri.EscapeDataString(puuid);
+            
 
             var matchDetails = await GetMatchDetails(safeMatchId);
 
-            if (matchDetails != null)
+            if (matchDetails == null)
             {
-                var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == safePuuid);
-
-                return new PlayerStatsDto
-                {
-                    Kills = player?.Stats.Kills ?? 0,
-                    Deaths = player?.Stats.Deaths ?? 0,
-                    Assists = player?.Stats.Assists ?? 0,
-                    Headshots = player?.Stats.Headshots ?? 0,
-                    Bodyshots = player?.Stats.Bodyshots ?? 0,
-                    Legshots = player?.Stats.Legshots ?? 0
-
-                };
-                
+                return null;
             }
-            return null;
+            
+            var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == puuid);
+
+            if (player == null)
+            {
+                return null;
+            }
+
+            return new PlayerStatsDto
+            {
+                Kills = player?.Stats.Kills ?? 0,
+                Deaths = player?.Stats.Deaths ?? 0,
+                Assists = player?.Stats.Assists ?? 0,
+                Headshots = player?.Stats.Headshots ?? 0,
+                Bodyshots = player?.Stats.Bodyshots ?? 0,
+                Legshots = player?.Stats.Legshots ?? 0
+
+            };
+                
+            
+            
 
         }
     }
