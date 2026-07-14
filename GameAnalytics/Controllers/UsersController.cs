@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using GameAnalytics.Data;
 using GameAnalytics.Models;
+using GameAnalytics.Models.External;
+using GameAnalytics.Models.Internal;
 using System.Net.Http;
 using GameAnalytics.Services;
 using Microsoft.EntityFrameworkCore;
@@ -17,14 +19,17 @@ namespace GameAnalytics.Controllers
     {
         private static readonly HttpClient client = new HttpClient();
 
+        private readonly PlayerStatAnalyser _analyser;
+
         private readonly AppDbContext _context;
 
         private readonly RiotApiService _riotApiService;
 
-        public UsersController(AppDbContext context, RiotApiService riotApi)
+        public UsersController(AppDbContext context, RiotApiService riotApi, PlayerStatAnalyser analyser)
         {
             _context = context;
             _riotApiService = riotApi;
+            _analyser = analyser;
         }
 
         [HttpPost]
@@ -42,7 +47,23 @@ namespace GameAnalytics.Controllers
             return users;
         }
 
-    
+        [HttpGet("puuid/{gameName}/{tagLine}")]
+        public async Task<IActionResult> GetUserId(string gameName, string tagLine) 
+        {
+            var puuid = await _riotApiService.GetUserId(gameName, tagLine);
+
+            if (puuid != null) {
+                return Ok(puuid);
+            }
+            else
+            {
+                return NotFound("User not found!");
+            }
+            
+        }
+
+
+
 
         [HttpGet("match-history/{gameName}/{tagLine}")]
 
@@ -71,6 +92,37 @@ namespace GameAnalytics.Controllers
             {
                 return NotFound("Match details not found!");
             }
+        }
+
+        [HttpGet("match-details/{matchId}/player-statistics/{gameName}/{tagLine}")]
+
+        public async Task<IActionResult> GetMatchStatistics(string matchId, string gameName, string tagLine)
+        {
+            if (string.IsNullOrEmpty(matchId) ||
+                string.IsNullOrEmpty(gameName) ||
+                string.IsNullOrEmpty(tagLine))
+            {
+                return BadRequest("Missing required parameters.");
+            }
+
+            var details = await _riotApiService.GetMatchDetails(matchId);
+
+            var puuid = await _riotApiService.GetUserId(gameName, tagLine);
+
+            if (puuid == null)
+                return NotFound("Player not found.");
+
+            var playerStats = await _riotApiService.GetPlayerStats(matchId, puuid);
+
+            if (playerStats == null)
+                return NotFound("Player statistics not found.");
+
+            var matchStatistics = _analyser.CalculateMatchStatistics(playerStats);
+
+            if (matchStatistics == null)
+                return NotFound("Match statistics not found.");
+
+            return Ok(matchStatistics);
         }
     }
 }
