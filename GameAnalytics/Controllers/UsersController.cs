@@ -42,18 +42,20 @@ namespace GameAnalytics.Controllers
             return users;
         }
 
-        [HttpGet("puuid/{gameName}/{tagLine}")]
+    
 
-        public async Task<IActionResult> GetPUUID(string gameName, string tagLine)
+        [HttpGet("matches/{gameName}/{tagLine}")]
+
+        public async Task<IActionResult> GetMatches(string gameName, string tagLine)
         {
-            var puuid = await _riotApiService.GetPUUIDAsync(gameName, tagLine);
-            if (puuid != null)
+            var matches = await _riotApiService.GetMatches(gameName, tagLine);
+            if (matches != null)
             {
-                return Ok(puuid);
+                return Ok(matches);
             }
             else
             {
-                return NotFound("Player not found!");
+                return NotFound("No matches found!");
             }
         }
     }

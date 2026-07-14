@@ -10,33 +10,32 @@
             _httpClient = httpClient;
             _configuration = configuration;
 
-            var apiKey = _configuration["RiotApi:ApiKey"];
-            Console.WriteLine($"Using API KEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEey: {apiKey}");
+            var apiKey = _configuration["RiotApi:HenrikApiKey"];
 
-            _httpClient.DefaultRequestHeaders.Add("X-Riot-Token", apiKey);
+            _httpClient.DefaultRequestHeaders.Add("Authorization", apiKey);
+
+
         }
 
 
-        public async Task<string?> GetPUUIDAsync(string gameName, string tagLine)
+        public async Task<string?> GetMatches(string gameName, string tagLine)
         {
-
             var safeGameName = Uri.EscapeDataString(gameName);
-            var safeTagLine = Uri.EscapeDataString(tagLine); 
+            var safeTagLine = Uri.EscapeDataString(tagLine);
 
-            var url = $"https://europe.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{safeGameName}/{safeTagLine}";
+            
+            var url = $"https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/{safeGameName}/{safeTagLine}";
 
             var response = await _httpClient.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                var json = System.Text.Json.JsonDocument.Parse(content);
-                var puuid = json.RootElement.GetProperty("puuid").GetString();
-                return puuid;
+                return await response.Content.ReadAsStringAsync();
             }
 
-            Console.WriteLine(response);
-            return null;
+           
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"HenrikDev API chyba: {response.StatusCode} - {error}");
         }
     }
 }
