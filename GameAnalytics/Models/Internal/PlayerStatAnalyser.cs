@@ -29,12 +29,18 @@ namespace GameAnalytics.Models.Internal
             return Math.Round(playerStats.Deaths > 0 ? (double)(playerStats.Kills + playerStats.Assists) / playerStats.Deaths : (playerStats.Kills + playerStats.Assists), 2);
         }
 
-        public string CalculateMatchStatistics(PlayerStatsDto playerStats)
+        public PlayerPerformanceDto CalculateMatchStatistics(PlayerStatsDto playerStats)
         {
-            var headshotPercentage = HeadshotPercentage(playerStats);
-            var kdRatio = KillToDeathRatio(playerStats);
-            var kadRatio = KillAssistToDeathRatio(playerStats);
-            return $"Headshot Percentage: {headshotPercentage}%, K/D Ratio: {kdRatio}, K+A/D Ratio: {kadRatio}";
+            var hs= HeadshotPercentage(playerStats);
+            var kd = KillToDeathRatio(playerStats);
+            var kda = KillAssistToDeathRatio(playerStats);
+            return new PlayerPerformanceDto
+            {
+                headshotPercentage = hs,
+                kdRatio = kd,
+                kdaRatio = kda,
+            };
         }
+
     }
 }

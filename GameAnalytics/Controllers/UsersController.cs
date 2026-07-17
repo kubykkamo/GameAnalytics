@@ -52,16 +52,21 @@ namespace GameAnalytics.Controllers
         {
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
-            if (puuid != null) {
-                return Ok(puuid);
-            }
-            else
-            {
-                return NotFound("User not found!");
-            }
+            return Ok(puuid);
+            
             
         }
 
+
+        [HttpGet("profile/{gameName}/{tagLine}")]
+
+        public async Task<IActionResult> GetAccountInfo(string gameName, string tagLine)
+        { 
+            var data = await _riotApiService.GetAccountInfo(gameName, tagLine);
+
+            return Ok(data);
+            
+        }
 
 
 
@@ -70,54 +75,33 @@ namespace GameAnalytics.Controllers
         public async Task<IActionResult> GetMatches(string gameName, string tagLine)
         {
             var matches = await _riotApiService.GetMatches(gameName, tagLine);
-            if (matches != null)
-            {
-                return Ok(matches);
-            }
-            else
-            {
-                return NotFound("No matches found!");
-            }
+           
+            return Ok(matches);
         }
+            
+        
 
         [HttpGet("match-details/{matchId}")]
         public async Task<IActionResult> GetMatchDetails(string matchId)
         {
             var matchDetails = await _riotApiService.GetMatchDetails(matchId);
-            if (matchDetails != null)
-            {
-                return Ok(matchDetails);
-            }
-            else
-            {
-                return NotFound("Match details not found!");
-            }
+        
+
+            return Ok(matchDetails);
         }
 
         [HttpGet("match-details/{matchId}/player-statistics/{gameName}/{tagLine}")]
 
         public async Task<IActionResult> GetMatchStatistics(string matchId, string gameName, string tagLine)
         {
-            if (string.IsNullOrEmpty(matchId) ||
-                string.IsNullOrEmpty(gameName) ||
-                string.IsNullOrEmpty(tagLine))
-            {
-                return BadRequest("Missing required parameters.");
-            }
-
+           
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
-
-            if (puuid == null)
-                return NotFound("Player not found.");
 
             var playerStats = await _riotApiService.GetPlayerStats(matchId, puuid);
 
-            if (playerStats == null)
-                return NotFound("Player statistics not found.");
-
             var matchStatistics = _analyser.CalculateMatchStatistics(playerStats);
 
-            
+             
 
             return Ok(matchStatistics);
         }

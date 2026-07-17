@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
-
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
+using GameAnalytics.Exceptions;
 using GameAnalytics.Models.External;
 namespace GameAnalytics.Services
 {
@@ -20,7 +21,7 @@ namespace GameAnalytics.Services
 
         }
 
-        public async Task<string?> GetUserId(string gameName, string tagLine)
+        public async Task<string> GetUserId(string gameName, string tagLine)
         {
             var safeGameName = Uri.EscapeDataString(gameName);
             var safeTagLine = Uri.EscapeDataString(tagLine);
@@ -28,16 +29,17 @@ namespace GameAnalytics.Services
 
             var response = await _httpClient.GetAsync(url);
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                return doc.RootElement.GetProperty("data").GetProperty("puuid").GetString();
+                throw new NotFoundException("User does not exist.");
             }
-            return null;
 
+            JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            return doc.RootElement.GetProperty("data").GetProperty("puuid").GetString();
+            
 
         }
-        public async Task<List<string?>> GetMatches(string gameName, string tagLine)
+        public async Task<List<string>> GetMatches(string gameName, string tagLine)
         {
             var safeGameName = Uri.EscapeDataString(gameName);
             var safeTagLine = Uri.EscapeDataString(tagLine);
@@ -48,53 +50,71 @@ namespace GameAnalytics.Services
             var response = await _httpClient.GetAsync(url);
 
 
-
-
-
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-                var matchList = JsonSerializer.Deserialize<MatchListDto>(jsonString, options);
-
-                return matchList.Data.Select(m => m.Meta.Id).ToList();
+                throw new NotFoundException("No matches found.");
             }
 
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var matchList = JsonSerializer.Deserialize<MatchListDto>(jsonString, options);
 
-            var error = await response.Content.ReadAsStringAsync();
-            throw new Exception($"HenrikDev API chyba: {response.StatusCode} - {error}");
+            if (matchList == null)
+            {
+                throw new NotFoundException("Matches not found.");
+            }
+
+            var readyList =  matchList.Data.Select(x => x.Meta.Id).ToList();
+
+            return readyList;
         }
 
-        public async Task<MatchResponseDto?> GetMatchDetails(string matchId)
+       
+        
+
+        public async Task<MatchResponseDto> GetMatchDetails(string matchId)
         {
             var safeMatchId = Uri.EscapeDataString(matchId);
             var url = $"https://api.henrikdev.xyz/valorant/v4/match/eu/{safeMatchId}";
             var response = await _httpClient.GetAsync(url);
-            if (response.IsSuccessStatusCode)
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
 
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var matchDetails = JsonSerializer.Deserialize<MatchResponseDto>(jsonString, options);
-                return matchDetails;
+            if (!response.IsSuccessStatusCode)
+            { 
+                throw new NotFoundException("Match does not exist.");
             }
-            var error = await response.Content.ReadAsStringAsync();
-            throw new Exception($"HenrikDev API chyba: {response.StatusCode} - {error}");
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var matchDetails = JsonSerializer.Deserialize<MatchResponseDto>(jsonString, options);
+
+            if(matchDetails == null)
+            {
+                throw new NotFoundException("Match details unavailable.");
+            }    
+
+            return matchDetails;
+            
+            
         }
 
-        public async Task<PlayerStatsDto?> GetPlayerStats(string matchId, string puuid)
+        public async Task<PlayerStatsDto> GetPlayerStats(string matchId, string puuid)
         {
-            if (string.IsNullOrEmpty(matchId) || string.IsNullOrEmpty(puuid))
+            if (string.IsNullOrEmpty(matchId))
             {
-                return null;
+                throw new ArgumentException("matchId cannot be empty", nameof(matchId));
             }
 
+            if (string.IsNullOrEmpty(puuid))
+            {
+                throw new ArgumentException("puuid cannot be empty", nameof(puuid));
+            }
             var safeMatchId = Uri.EscapeDataString(matchId);
             
 
@@ -102,15 +122,10 @@ namespace GameAnalytics.Services
 
             if (matchDetails == null)
             {
-                return null;
+                throw new NotFoundException("Match not found.");
             }
             
             var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == puuid);
-
-            if (player == null)
-            {
-                return null;
-            }
 
             return new PlayerStatsDto
             {
@@ -125,6 +140,42 @@ namespace GameAnalytics.Services
                 
             
             
+
+        }
+
+        public async Task<AccountData> GetAccountInfo(string gameName, string tagLine)
+        {
+            var safeGameName = Uri.EscapeDataString(gameName);
+            var safeTagLine = Uri.EscapeDataString(tagLine);
+            var url = $"https://api.henrikdev.xyz/valorant/v2/account/{safeGameName}/{safeTagLine}";
+
+            var response = await _httpClient.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode) 
+            { 
+                throw new NotFoundException("User does not exist."); 
+            }
+            
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+
+            var options = new JsonSerializerOptions{ PropertyNameCaseInsensitive = true };
+            var accountDetails = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
+ 
+            if (accountDetails == null) 
+            {
+                throw new NotFoundException("Account not found.");
+            }
+
+
+            return new AccountData
+            {
+                Card = accountDetails.Data.Card ?? "",
+
+                AccountLevel = accountDetails.Data.AccountLevel,
+
+                Puuid = accountDetails.Data.Puuid ?? ""
+            };
 
         }
     }

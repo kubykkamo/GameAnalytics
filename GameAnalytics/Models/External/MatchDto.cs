@@ -1,4 +1,6 @@
-﻿namespace GameAnalytics.Models.External
+﻿using System.Text.Json.Serialization;
+
+namespace GameAnalytics.Models.External
 {
     public class MatchResponseDto
     {
@@ -72,4 +74,28 @@
         public int Legshots { get; set; }
         public int Damage { get; set; }
     }
+
+
+
+     public class AccountResponseDto 
+    { 
+        public AccountData Data { get; set; }
+    }
+
+    public class AccountData 
+    { 
+        public string Puuid { get; set; }
+        [JsonPropertyName("account_level")] 
+        public int AccountLevel { get; set; }
+        public string Card { get; set; }
+    
+    }
+
+    public class PlayerPerformanceDto
+    {
+        public double headshotPercentage { get; set; }
+        public double kdRatio { get; set; }
+        public double kdaRatio { get; set; }
+    }
+    
 }
