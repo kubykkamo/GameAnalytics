@@ -13,8 +13,6 @@ namespace GameAnalytics.Middleware
                 Exception exception,
                 CancellationToken cancellationToken
 
-
-
             )
         {
             var statusCode = exception switch
@@ -28,7 +26,7 @@ namespace GameAnalytics.Middleware
             {
                 Status = statusCode,
                 Title = "Something went wrong",
-                Detail = exception.Message
+                Detail = $"{exception.Message}, \n \n {exception.StackTrace}",
             };
 
             httpcontext.Response.StatusCode = statusCode;

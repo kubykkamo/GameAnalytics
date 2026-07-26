@@ -39,6 +39,9 @@ namespace GameAnalytics.Models.Internal
                 headshotPercentage = hs,
                 kdRatio = kd,
                 kdaRatio = kda,
+                kills = playerStats.Kills,
+                deaths = playerStats.Deaths,
+                assists = playerStats.Assists
             };
         }
 

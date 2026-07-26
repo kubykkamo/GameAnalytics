@@ -35,7 +35,7 @@ namespace GameAnalytics.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody] User user)
         {
-            
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return Ok(user);
@@ -48,24 +48,24 @@ namespace GameAnalytics.Controllers
         }
 
         [HttpGet("puuid/{gameName}/{tagLine}")]
-        public async Task<IActionResult> GetUserId(string gameName, string tagLine) 
+        public async Task<IActionResult> GetUserId(string gameName, string tagLine)
         {
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
             return Ok(puuid);
-            
-            
+
+
         }
 
 
         [HttpGet("profile/{gameName}/{tagLine}")]
 
         public async Task<IActionResult> GetAccountInfo(string gameName, string tagLine)
-        { 
+        {
             var data = await _riotApiService.GetAccountInfo(gameName, tagLine);
 
             return Ok(data);
-            
+
         }
 
 
@@ -75,36 +75,56 @@ namespace GameAnalytics.Controllers
         public async Task<IActionResult> GetMatches(string gameName, string tagLine)
         {
             var matches = await _riotApiService.GetMatches(gameName, tagLine);
-           
+
             return Ok(matches);
         }
-            
-        
+
+
 
         [HttpGet("match-details/{matchId}")]
         public async Task<IActionResult> GetMatchDetails(string matchId)
         {
             var matchDetails = await _riotApiService.GetMatchDetails(matchId);
-        
+
 
             return Ok(matchDetails);
         }
+
 
         [HttpGet("match-details/{matchId}/player-statistics/{gameName}/{tagLine}")]
 
         public async Task<IActionResult> GetMatchStatistics(string matchId, string gameName, string tagLine)
         {
-           
+
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
             var playerStats = await _riotApiService.GetPlayerStats(matchId, puuid);
 
             var matchStatistics = _analyser.CalculateMatchStatistics(playerStats);
 
-             
+
 
             return Ok(matchStatistics);
         }
+
+
+        [HttpGet("recent-stats/{gameName}/{tagLine}")]
+
+        public async Task<IActionResult> GetRecentStats(string gameName, string tagLine)
+        {
+            var puuid = await _riotApiService.GetUserId(gameName, tagLine);
+
+            var matches = await _riotApiService.GetMatches(gameName, tagLine);
+
+            var stats = await _riotApiService.GetRecentStats(matches, puuid);
+
+            return Ok(stats);
+
+
+        }
+
+
+    
     }
 }
  

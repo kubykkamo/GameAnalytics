@@ -1,4 +1,6 @@
-﻿namespace GameAnalytics.Models.External
+﻿using System.Text.Json.Serialization;
+
+namespace GameAnalytics.Models.External
 {
     public class MatchListDto
     {
@@ -6,12 +8,13 @@
     }
     public class MatchItemDto
     {
-        public MatchMetaDto Meta {  get; set; }
+        public MatchMetaDto MetaData {  get; set; }
 
     }
 
     public class MatchMetaDto
     {
+        [JsonPropertyName("match_id")]
         public string Id { get; set; }
     }
 

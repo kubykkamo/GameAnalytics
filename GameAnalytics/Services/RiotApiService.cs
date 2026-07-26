@@ -2,18 +2,20 @@
 using System.Text.Json;
 using GameAnalytics.Exceptions;
 using GameAnalytics.Models.External;
+using GameAnalytics.Models.Internal;
 namespace GameAnalytics.Services
 {
     public class RiotApiService
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
+        private readonly PlayerStatAnalyser _analyser;
 
-        public RiotApiService(HttpClient httpClient, IConfiguration configuration)
+        public RiotApiService(HttpClient httpClient, IConfiguration configuration, PlayerStatAnalyser analyser)
         {
             _httpClient = httpClient;
             _configuration = configuration;
-
+            _analyser = analyser;
             var apiKey = _configuration["RiotApi:HenrikApiKey"];
 
             _httpClient.DefaultRequestHeaders.Add("Authorization", apiKey);
@@ -31,12 +33,12 @@ namespace GameAnalytics.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new NotFoundException("User does not exist.");
+                throw new NotFoundException($"Unable to fetch user data: {response.ToString()} ");
             }
 
             JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             return doc.RootElement.GetProperty("data").GetProperty("puuid").GetString();
-            
+
 
         }
         public async Task<List<string>> GetMatches(string gameName, string tagLine)
@@ -45,7 +47,7 @@ namespace GameAnalytics.Services
             var safeTagLine = Uri.EscapeDataString(tagLine);
 
 
-            var url = $"https://api.henrikdev.xyz/valorant/v1/stored-matches/eu/{safeGameName}/{safeTagLine}";
+            var url = $"https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/{safeGameName}/{safeTagLine}?size=3";
 
             var response = await _httpClient.GetAsync(url);
 
@@ -67,22 +69,21 @@ namespace GameAnalytics.Services
                 throw new NotFoundException("Matches not found.");
             }
 
-            var readyList =  matchList.Data.Select(x => x.Meta.Id).ToList();
+            var readyList = matchList.Data.Select(x => x.MetaData.Id).ToList();
+
+           
 
             return readyList;
         }
 
-       
-        
-
-        public async Task<MatchResponseDto> GetMatchDetails(string matchId)
+        public async Task<SingleMatchResponseDto> GetMatchDetails(string matchId)
         {
             var safeMatchId = Uri.EscapeDataString(matchId);
             var url = $"https://api.henrikdev.xyz/valorant/v4/match/eu/{safeMatchId}";
             var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
-            { 
+            {
                 throw new NotFoundException("Match does not exist.");
             }
 
@@ -92,16 +93,16 @@ namespace GameAnalytics.Services
             };
 
             var jsonString = await response.Content.ReadAsStringAsync();
-            var matchDetails = JsonSerializer.Deserialize<MatchResponseDto>(jsonString, options);
+            var matchDetails = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
 
-            if(matchDetails == null)
+            if (matchDetails == null)
             {
                 throw new NotFoundException("Match details unavailable.");
-            }    
+            }
 
             return matchDetails;
-            
-            
+
+
         }
 
         public async Task<PlayerStatsDto> GetPlayerStats(string matchId, string puuid)
@@ -116,7 +117,7 @@ namespace GameAnalytics.Services
                 throw new ArgumentException("puuid cannot be empty", nameof(puuid));
             }
             var safeMatchId = Uri.EscapeDataString(matchId);
-            
+
 
             var matchDetails = await GetMatchDetails(safeMatchId);
 
@@ -124,7 +125,7 @@ namespace GameAnalytics.Services
             {
                 throw new NotFoundException("Match not found.");
             }
-            
+
             var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == puuid);
 
             return new PlayerStatsDto
@@ -137,9 +138,9 @@ namespace GameAnalytics.Services
                 Legshots = player?.Stats.Legshots ?? 0
 
             };
-                
-            
-            
+
+
+
 
         }
 
@@ -151,18 +152,18 @@ namespace GameAnalytics.Services
 
             var response = await _httpClient.GetAsync(url);
 
-            if (!response.IsSuccessStatusCode) 
-            { 
-                throw new NotFoundException("User does not exist."); 
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new NotFoundException("User does not exist.");
             }
-            
+
             var jsonString = await response.Content.ReadAsStringAsync();
 
 
-            var options = new JsonSerializerOptions{ PropertyNameCaseInsensitive = true };
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var accountDetails = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
- 
-            if (accountDetails == null) 
+
+            if (accountDetails == null)
             {
                 throw new NotFoundException("Account not found.");
             }
@@ -176,6 +177,32 @@ namespace GameAnalytics.Services
 
                 Puuid = accountDetails.Data.Puuid ?? ""
             };
+
+        }
+
+        public async Task<List<PlayerPerformanceDto>> GetRecentStats(List<string> matches, string puuid)
+        {
+            var stats = new List<PlayerPerformanceDto>();
+
+
+            matches = matches.Take(10).ToList();
+
+            foreach (string match in matches)
+            {
+                var matchStats = await GetPlayerStats(match, puuid);
+
+                if (matchStats == null)
+                {
+                    continue;
+                }
+
+                var playerPerformance = _analyser.CalculateMatchStatistics(matchStats);
+
+                stats.Add(playerPerformance);
+
+            }
+
+            return stats;
 
         }
     }
