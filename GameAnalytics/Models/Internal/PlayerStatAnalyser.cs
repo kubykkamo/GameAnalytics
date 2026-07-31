@@ -36,12 +36,12 @@ namespace GameAnalytics.Models.Internal
             var kda = KillAssistToDeathRatio(playerStats);
             return new PlayerPerformanceDto
             {
-                headshotPercentage = hs,
-                kdRatio = kd,
-                kdaRatio = kda,
-                kills = playerStats.Kills,
-                deaths = playerStats.Deaths,
-                assists = playerStats.Assists
+                HeadshotPercentage = hs,
+                KdRatio = kd,
+                KdaRatio = kda,
+                Kills = playerStats.Kills,
+                Deaths = playerStats.Deaths,
+                Assists = playerStats.Assists
             };
         }
 

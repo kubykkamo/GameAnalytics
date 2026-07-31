@@ -21,7 +21,11 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddHttpClient<RiotApiService>();
+builder.Services.AddTransient<ExternalApiErrorHandler>();
+
+builder.Services.AddHttpClient<RiotApiService>()
+    .AddHttpMessageHandler<ExternalApiErrorHandler>();
+
 builder.Services.AddScoped<PlayerStatAnalyser>();
 
 var app = builder.Build();

@@ -17,9 +17,26 @@ namespace GameAnalytics.Models.External
     {
         public MatchMetaData Metadata { get; set; }
         public List<PlayerDto> Players { get; set; }
+
+        public List<TeamDto> Teams { get; set; }
         public List<RoundDto> Rounds { get; set; } 
     }
 
+    public class TeamDto
+    {
+        [JsonPropertyName("team_id")]
+        public string TeamId { get; set; } 
+
+        public bool Won { get; set; }
+
+        public TeamRoundsDto Rounds { get; set; }
+    }
+
+    public class TeamRoundsDto
+    {
+        public int Won { get; set; }
+        public int Lost { get; set; }
+    }
     public class MatchMetaData
     {
         public Map Map { get; set; }
@@ -27,6 +44,9 @@ namespace GameAnalytics.Models.External
         public string StartedAt { get; set; }
 
         public Queue queue { get; set; }
+
+        [JsonPropertyName("match_id")]
+        public string MatchId { get; set; }
     }
 
     public class Queue
@@ -70,6 +90,7 @@ namespace GameAnalytics.Models.External
         public int Bodyshots { get; set; }
 
         public int Legshots { get; set; }
+        public int Score { get; set; }
 
     }
 
@@ -123,12 +144,12 @@ namespace GameAnalytics.Models.External
 
     public class PlayerPerformanceDto
     {
-        public double headshotPercentage { get; set; }
-        public double kdRatio { get; set; }
-        public double kdaRatio { get; set; }
-        public double kills {  get; set; }
-        public double deaths { get; set; }
-        public double assists { get; set; }
+        public double HeadshotPercentage { get; set; }
+        public double KdRatio { get; set; }
+        public double KdaRatio { get; set; }
+        public double Kills {  get; set; }
+        public double Deaths { get; set; }
+        public double Assists { get; set; }
     }
     
 }

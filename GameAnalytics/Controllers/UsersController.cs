@@ -123,7 +123,14 @@ namespace GameAnalytics.Controllers
 
         }
 
+        [HttpGet("match-history/{gameName}/{tagLine}/{agentName}")]
 
+        public async Task<IActionResult> GetMatchesByAgent(string gameName, string tagLine, string agentName)
+        {
+            var matches = await _riotApiService.GetMatchesByAgent(gameName, tagLine, agentName);
+
+            return Ok(matches);
+        }
     
     }
 }

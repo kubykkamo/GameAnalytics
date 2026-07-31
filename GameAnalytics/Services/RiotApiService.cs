@@ -10,12 +10,14 @@ namespace GameAnalytics.Services
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly PlayerStatAnalyser _analyser;
+        private readonly ILogger<RiotApiService> _logger;
 
-        public RiotApiService(HttpClient httpClient, IConfiguration configuration, PlayerStatAnalyser analyser)
+        public RiotApiService(HttpClient httpClient, IConfiguration configuration, PlayerStatAnalyser analyser, ILogger<RiotApiService> logger)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _analyser = analyser;
+            _logger = logger;
             var apiKey = _configuration["RiotApi:HenrikApiKey"];
 
             _httpClient.DefaultRequestHeaders.Add("Authorization", apiKey);
@@ -31,11 +33,6 @@ namespace GameAnalytics.Services
 
             var response = await _httpClient.GetAsync(url);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new NotFoundException($"Unable to fetch user data: {response.ToString()} ");
-            }
-
             JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
             return doc.RootElement.GetProperty("data").GetProperty("puuid").GetString();
 
@@ -46,28 +43,17 @@ namespace GameAnalytics.Services
             var safeGameName = Uri.EscapeDataString(gameName);
             var safeTagLine = Uri.EscapeDataString(tagLine);
 
-
-            var url = $"https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/{safeGameName}/{safeTagLine}?size=3";
+            var url = $"https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/{safeGameName}/{safeTagLine}";
 
             var response = await _httpClient.GetAsync(url);
-
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new NotFoundException("No matches found.");
-            }
 
             var jsonString = await response.Content.ReadAsStringAsync();
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
-            var matchList = JsonSerializer.Deserialize<MatchListDto>(jsonString, options);
 
-            if (matchList == null)
-            {
-                throw new NotFoundException("Matches not found.");
-            }
+            var matchList = JsonSerializer.Deserialize<MatchListDto>(jsonString, options);
 
             var readyList = matchList.Data.Select(x => x.MetaData.Id).ToList();
 
@@ -82,11 +68,6 @@ namespace GameAnalytics.Services
             var url = $"https://api.henrikdev.xyz/valorant/v4/match/eu/{safeMatchId}";
             var response = await _httpClient.GetAsync(url);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new NotFoundException("Match does not exist.");
-            }
-
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -94,11 +75,6 @@ namespace GameAnalytics.Services
 
             var jsonString = await response.Content.ReadAsStringAsync();
             var matchDetails = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
-
-            if (matchDetails == null)
-            {
-                throw new NotFoundException("Match details unavailable.");
-            }
 
             return matchDetails;
 
@@ -109,7 +85,7 @@ namespace GameAnalytics.Services
         {
             if (string.IsNullOrEmpty(matchId))
             {
-                throw new ArgumentException("matchId cannot be empty", nameof(matchId));
+                throw new ArgumentException("matchId cannot be empty", matchId);
             }
 
             if (string.IsNullOrEmpty(puuid))
@@ -120,11 +96,6 @@ namespace GameAnalytics.Services
 
 
             var matchDetails = await GetMatchDetails(safeMatchId);
-
-            if (matchDetails == null)
-            {
-                throw new NotFoundException("Match not found.");
-            }
 
             var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == puuid);
 
@@ -152,22 +123,11 @@ namespace GameAnalytics.Services
 
             var response = await _httpClient.GetAsync(url);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new NotFoundException("User does not exist.");
-            }
-
             var jsonString = await response.Content.ReadAsStringAsync();
 
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var accountDetails = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
-
-            if (accountDetails == null)
-            {
-                throw new NotFoundException("Account not found.");
-            }
-
 
             return new AccountData
             {
@@ -187,8 +147,11 @@ namespace GameAnalytics.Services
 
             matches = matches.Take(10).ToList();
 
+            int count = 0;
             foreach (string match in matches)
             {
+                _logger.LogInformation("Fetching match {match}", match);
+
                 var matchStats = await GetPlayerStats(match, puuid);
 
                 if (matchStats == null)
@@ -200,10 +163,45 @@ namespace GameAnalytics.Services
 
                 stats.Add(playerPerformance);
 
+                count++;
+
             }
+
+            _logger.LogInformation("Stats created from {count} matches for user: {puuid}.", count, puuid);
 
             return stats;
 
         }
+
+        public async Task<List<string>> GetMatchesByAgent(string gameName, string tagLine, string agentName)
+        {
+
+            List<string> matches = new List<string>();
+
+            var loweredAgentName = agentName.ToLower();
+
+
+            string puuid = await GetUserId(gameName, tagLine);
+
+            var matchHistory = await GetMatches(gameName, tagLine);
+
+
+            foreach (var match in matchHistory)
+            {
+                var matchDetails = await GetMatchDetails(match);
+
+                bool hasAgent = matchDetails.Data.Players.Any(p => p.Puuid == puuid && p.Agent.Name.ToLower() == loweredAgentName);
+
+                if (hasAgent)
+                {
+                    matches.Add(matchDetails.Data.Metadata.MatchId);
+                }
+            }
+
+            if (!matches.Any()) throw new NotFoundException("No matches found with this agent.");
+
+            return matches;
+        }
+
     }
 }
