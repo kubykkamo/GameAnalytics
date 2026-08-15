@@ -1,29 +1,16 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
-using GameAnalytics.Exceptions;
-using GameAnalytics.Models.External;
-using GameAnalytics.Models.Internal;
-namespace GameAnalytics.Services
+﻿using System.Text.Json;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using GameAnalytics.Domain.Services;
+using GameAnalytics.Domain.Entities;
+using GameAnalytics.Domain.Exceptions;
+namespace GameAnalytics.Infrastructure
 {
-    public class RiotApiService
+    public class RiotApiService(HttpClient _httpClient, IConfiguration _configuration, PlayerStatAnalyser _analyser, ILogger<RiotApiService> _logger)
     {
-        private readonly HttpClient _httpClient;
-        private readonly IConfiguration _configuration;
-        private readonly PlayerStatAnalyser _analyser;
-        private readonly ILogger<RiotApiService> _logger;
+        
 
-        public RiotApiService(HttpClient httpClient, IConfiguration configuration, PlayerStatAnalyser analyser, ILogger<RiotApiService> logger)
-        {
-            _httpClient = httpClient;
-            _configuration = configuration;
-            _analyser = analyser;
-            _logger = logger;
-            var apiKey = _configuration["RiotApi:HenrikApiKey"];
-
-            _httpClient.DefaultRequestHeaders.Add("Authorization", apiKey);
-
-
-        }
+        
 
         public async Task<string> GetUserId(string gameName, string tagLine)
         {
@@ -81,17 +68,10 @@ namespace GameAnalytics.Services
 
         }
 
-        public async Task<PlayerStatsDto> GetPlayerStats(string matchId, string puuid)
+        public async Task<PlayerStats> GetPlayerStats(string matchId, string puuid)
         {
-            if (string.IsNullOrEmpty(matchId))
-            {
-                throw new ArgumentException("matchId cannot be empty", matchId);
-            }
-
-            if (string.IsNullOrEmpty(puuid))
-            {
-                throw new ArgumentException("puuid cannot be empty", nameof(puuid));
-            }
+            ArgumentException.ThrowIfNullOrEmpty(matchId);
+            ArgumentException.ThrowIfNullOrEmpty(puuid);
             var safeMatchId = Uri.EscapeDataString(matchId);
 
 
@@ -99,7 +79,7 @@ namespace GameAnalytics.Services
 
             var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == puuid);
 
-            return new PlayerStatsDto
+            return new PlayerStats
             {
                 Kills = player?.Stats.Kills ?? 0,
                 Deaths = player?.Stats.Deaths ?? 0,
@@ -140,9 +120,9 @@ namespace GameAnalytics.Services
 
         }
 
-        public async Task<List<PlayerPerformanceDto>> GetRecentStats(List<string> matches, string puuid)
+        public async Task<List<PlayerPerformance>> GetRecentStats(List<string> matches, string puuid)
         {
-            var stats = new List<PlayerPerformanceDto>();
+            var stats = new List<PlayerPerformance>();
 
 
             matches = matches.Take(10).ToList();
@@ -202,6 +182,8 @@ namespace GameAnalytics.Services
 
             return matches;
         }
+
+        
 
     }
 }

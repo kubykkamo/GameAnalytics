@@ -1,12 +1,12 @@
 using GameAnalytics.Data;
 using System;
-using GameAnalytics.Models.External;
-using GameAnalytics.Services;
 using Microsoft.EntityFrameworkCore;
-using GameAnalytics.Models.Internal;
+using GameAnalytics.Domain.Services;
+using GameAnalytics.Infrastructure;
 using GameAnalytics.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 
 builder.Services.AddControllers();
@@ -23,7 +23,13 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddTransient<ExternalApiErrorHandler>();
 
-builder.Services.AddHttpClient<RiotApiService>()
+
+var apiKey = builder.Configuration["RiotApi:HenrikApiKey"];
+
+builder.Services.AddHttpClient<RiotApiService>(client => 
+{
+    client.DefaultRequestHeaders.Add("Authorization", apiKey);
+})
     .AddHttpMessageHandler<ExternalApiErrorHandler>();
 
 builder.Services.AddScoped<PlayerStatAnalyser>();

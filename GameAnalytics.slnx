@@ -1,3 +1,9 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GameAnalytics.Api/GameAnalytics.Api.csproj" />
+    <Project Path="src/GameAnalytics.Application/GameAnalytics.Application.csproj" />
+    <Project Path="src/GameAnalytics.Domain/GameAnalytics.Domain.csproj" />
+    <Project Path="src/GameAnalytics.Infrastructure/GameAnalytics.Infrastructure.csproj" />
+  </Folder>
   <Project Path="GameAnalytics/GameAnalytics.csproj" />
 </Solution>

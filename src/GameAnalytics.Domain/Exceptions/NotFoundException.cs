@@ -1,4 +1,4 @@
-﻿namespace GameAnalytics.Exceptions
+﻿namespace GameAnalytics.Domain.Exceptions
 {
     public class NotFoundException : Exception
     {

@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using GameAnalytics.Data;
-using GameAnalytics.Models;
-using GameAnalytics.Models.External;
-using GameAnalytics.Models.Internal;
+using GameAnalytics.Domain.Services;
+using GameAnalytics.Domain.Entities;
+using GameAnalytics.Infrastructure;
 using System.Net.Http;
-using GameAnalytics.Services;
 using Microsoft.EntityFrameworkCore;
+
 
 
 namespace GameAnalytics.Controllers
@@ -48,7 +48,7 @@ namespace GameAnalytics.Controllers
         }
 
         [HttpGet("puuid/{gameName}/{tagLine}")]
-        public async Task<IActionResult> GetUserId(string gameName, string tagLine)
+        public async Task<ActionResult<string>> GetUserId(string gameName, string tagLine)
         {
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
@@ -60,7 +60,7 @@ namespace GameAnalytics.Controllers
 
         [HttpGet("profile/{gameName}/{tagLine}")]
 
-        public async Task<IActionResult> GetAccountInfo(string gameName, string tagLine)
+        public async Task<ActionResult<AccountData>> GetAccountInfo(string gameName, string tagLine)
         {
             var data = await _riotApiService.GetAccountInfo(gameName, tagLine);
 
@@ -72,7 +72,7 @@ namespace GameAnalytics.Controllers
 
         [HttpGet("match-history/{gameName}/{tagLine}")]
 
-        public async Task<IActionResult> GetMatches(string gameName, string tagLine)
+        public async Task<ActionResult<List<string>>> GetMatches(string gameName, string tagLine)
         {
             var matches = await _riotApiService.GetMatches(gameName, tagLine);
 
@@ -82,7 +82,7 @@ namespace GameAnalytics.Controllers
 
 
         [HttpGet("match-details/{matchId}")]
-        public async Task<IActionResult> GetMatchDetails(string matchId)
+        public async Task<ActionResult<SingleMatchResponseDto>> GetMatchDetails(string matchId)
         {
             var matchDetails = await _riotApiService.GetMatchDetails(matchId);
 
@@ -93,7 +93,7 @@ namespace GameAnalytics.Controllers
 
         [HttpGet("match-details/{matchId}/player-statistics/{gameName}/{tagLine}")]
 
-        public async Task<IActionResult> GetMatchStatistics(string matchId, string gameName, string tagLine)
+        public async Task<ActionResult<PlayerPerformance>> GetMatchStatistics(string matchId, string gameName, string tagLine)
         {
 
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
@@ -110,7 +110,7 @@ namespace GameAnalytics.Controllers
 
         [HttpGet("recent-stats/{gameName}/{tagLine}")]
 
-        public async Task<IActionResult> GetRecentStats(string gameName, string tagLine)
+        public async Task<ActionResult<PlayerPerformance>> GetRecentStats(string gameName, string tagLine)
         {
             var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
@@ -125,7 +125,7 @@ namespace GameAnalytics.Controllers
 
         [HttpGet("match-history/{gameName}/{tagLine}/{agentName}")]
 
-        public async Task<IActionResult> GetMatchesByAgent(string gameName, string tagLine, string agentName)
+        public async Task<ActionResult<List<string>>> GetMatchesByAgent(string gameName, string tagLine, string agentName)
         {
             var matches = await _riotApiService.GetMatchesByAgent(gameName, tagLine, agentName);
 

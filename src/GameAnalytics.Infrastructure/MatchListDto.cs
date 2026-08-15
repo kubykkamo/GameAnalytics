@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GameAnalytics.Models.External
+namespace GameAnalytics.Infrastructure
 {
     public class MatchListDto
     {

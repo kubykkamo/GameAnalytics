@@ -1,4 +1,4 @@
-﻿namespace GameAnalytics.Models
+﻿namespace GameAnalytics.Domain.Entities
 {
     public class User
     {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using GameAnalytics.Models;
+using GameAnalytics.Domain.Entities;
 
 namespace GameAnalytics.Data
 {
