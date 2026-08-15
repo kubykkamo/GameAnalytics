@@ -4,9 +4,14 @@ using Microsoft.Extensions.Logging;
 using GameAnalytics.Domain.Services;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Domain.Exceptions;
+using GameAnalytics.Application;
 namespace GameAnalytics.Infrastructure
 {
-    public class RiotApiService(HttpClient _httpClient, IConfiguration _configuration, PlayerStatAnalyser _analyser, ILogger<RiotApiService> _logger)
+    public class RiotApiService(
+    HttpClient _httpClient, 
+    IConfiguration _configuration, 
+    PlayerStatAnalyser _analyser, 
+    ILogger<RiotApiService> _logger) : IRiotApiClient
     {
         
 
@@ -49,7 +54,7 @@ namespace GameAnalytics.Infrastructure
             return readyList;
         }
 
-        public async Task<SingleMatchResponseDto> GetMatchDetails(string matchId)
+        public async Task<MatchDetails> GetMatchDetails(string matchId)
         {
             var safeMatchId = Uri.EscapeDataString(matchId);
             var url = $"https://api.henrikdev.xyz/valorant/v4/match/eu/{safeMatchId}";
@@ -61,11 +66,33 @@ namespace GameAnalytics.Infrastructure
             };
 
             var jsonString = await response.Content.ReadAsStringAsync();
-            var matchDetails = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
+            var raw = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
 
-            return matchDetails;
+             return new MatchDetails
+            {
+                MatchId = raw.Data.Metadata.MatchId,
+                MapName = raw.Data.Metadata.Map?.Name ?? "",
+                StartedAt = raw.Data.Metadata.StartedAt,
+                Players = raw.Data.Players.Select(p => new MatchPlayer
+                {
+                    Puuid = p.Puuid,
+                    Name = p.Name,
+                    Tag = p.Tag,
+                    TeamId = p.TeamId,
+                    AgentName = p.Agent?.Name ?? "",
+                    Stats = new PlayerStats
+                    {
+                        Kills = p.Stats.Kills,
+                        Deaths = p.Stats.Deaths,
+                        Assists = p.Stats.Assists,
+                        Headshots = p.Stats.Headshots,
+                        Bodyshots = p.Stats.Bodyshots,
+                        Legshots = p.Stats.Legshots
+                    }
+                }
+                ).ToList()
 
-
+            };
         }
 
         public async Task<PlayerStats> GetPlayerStats(string matchId, string puuid)
@@ -77,25 +104,12 @@ namespace GameAnalytics.Infrastructure
 
             var matchDetails = await GetMatchDetails(safeMatchId);
 
-            var player = matchDetails.Data.Players.FirstOrDefault(p => p.Puuid == puuid);
+            var player = matchDetails.Players.FirstOrDefault(p => p.Puuid == puuid);
 
-            return new PlayerStats
-            {
-                Kills = player?.Stats.Kills ?? 0,
-                Deaths = player?.Stats.Deaths ?? 0,
-                Assists = player?.Stats.Assists ?? 0,
-                Headshots = player?.Stats.Headshots ?? 0,
-                Bodyshots = player?.Stats.Bodyshots ?? 0,
-                Legshots = player?.Stats.Legshots ?? 0
-
-            };
-
-
-
-
+            return player?.Stats ?? new PlayerStats ();
         }
 
-        public async Task<AccountData> GetAccountInfo(string gameName, string tagLine)
+        public async Task<AccountInfo> GetAccountInfo(string gameName, string tagLine)
         {
             var safeGameName = Uri.EscapeDataString(gameName);
             var safeTagLine = Uri.EscapeDataString(tagLine);
@@ -107,15 +121,15 @@ namespace GameAnalytics.Infrastructure
 
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var accountDetails = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
+            var raw = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
 
-            return new AccountData
+            return new AccountInfo
             {
-                Card = accountDetails.Data.Card ?? "",
+                Card = raw.Data.Card ?? "",
 
-                AccountLevel = accountDetails.Data.AccountLevel,
+                AccountLevel = raw.Data.AccountLevel,
 
-                Puuid = accountDetails.Data.Puuid ?? ""
+                Puuid = raw.Data.Puuid ?? ""
             };
 
         }
@@ -170,11 +184,11 @@ namespace GameAnalytics.Infrastructure
             {
                 var matchDetails = await GetMatchDetails(match);
 
-                bool hasAgent = matchDetails.Data.Players.Any(p => p.Puuid == puuid && p.Agent.Name.ToLower() == loweredAgentName);
+                bool hasAgent = matchDetails.Players.Any(p => p.Puuid == puuid && p.AgentName.ToLower() == loweredAgentName);
 
                 if (hasAgent)
                 {
-                    matches.Add(matchDetails.Data.Metadata.MatchId);
+                    matches.Add(matchDetails.MatchId);
                 }
             }
 
