@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using GameAnalytics.Domain.Entities;
 
-namespace GameAnalytics.Data
+namespace GameAnalytics.Infrastructure
 {
     public class AppDbContext : DbContext
     {

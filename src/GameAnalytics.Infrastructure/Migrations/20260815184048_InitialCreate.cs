@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace GameAnalytics.Migrations
+namespace GameAnalytics.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
