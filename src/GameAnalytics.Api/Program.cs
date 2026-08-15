@@ -1,8 +1,8 @@
-using GameAnalytics.Data;
-using System;
+
 using Microsoft.EntityFrameworkCore;
 using GameAnalytics.Domain.Services;
 using GameAnalytics.Infrastructure;
+using GameAnalytics.Application;
 using GameAnalytics.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,7 +32,12 @@ builder.Services.AddHttpClient<RiotApiService>(client =>
 })
     .AddHttpMessageHandler<ExternalApiErrorHandler>();
 
+builder.Services.AddScoped<IRiotApiClient>(sp => sp.GetRequiredService<RiotApiService>());
+
 builder.Services.AddScoped<PlayerStatAnalyser>();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 
 var app = builder.Build();
 

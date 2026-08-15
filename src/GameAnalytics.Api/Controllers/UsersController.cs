@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GameAnalytics.Data;
 using GameAnalytics.Domain.Services;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Infrastructure;
 using System.Net.Http;
 using Microsoft.EntityFrameworkCore;
+using GameAnalytics.Application;
 
 
 
@@ -15,36 +15,21 @@ namespace GameAnalytics.Controllers
     [Route("api/[controller]")]
 
 
-    public class UsersController : ControllerBase
+    public class UsersController(HttpClient client, PlayerStatAnalyser _analyser, UserRepository _context, IRiotApiClient _riotApiService) : ControllerBase
     {
-        private static readonly HttpClient client = new HttpClient();
+       
 
-        private readonly PlayerStatAnalyser _analyser;
-
-        private readonly AppDbContext _context;
-
-        private readonly RiotApiService _riotApiService;
-
-        public UsersController(AppDbContext context, RiotApiService riotApi, PlayerStatAnalyser analyser)
-        {
-            _context = context;
-            _riotApiService = riotApi;
-            _analyser = analyser;
-        }
 
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody] User user)
         {
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return Ok(user);
+            return Ok(await _context.AddAsync(user));
         }
         [HttpGet]
         public async Task<IEnumerable<User>> GetUsers()
         {
-            var users = await _context.Users.ToListAsync();
-            return users;
+            return await _context.GetAllAsync();
         }
 
         [HttpGet("puuid/{gameName}/{tagLine}")]
