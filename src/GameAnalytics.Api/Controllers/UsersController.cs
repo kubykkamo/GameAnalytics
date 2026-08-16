@@ -2,20 +2,18 @@
 using GameAnalytics.Domain.Services;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Infrastructure;
-using System.Net.Http;
-using Microsoft.EntityFrameworkCore;
 using GameAnalytics.Application;
 
 
 
-namespace GameAnalytics.Controllers
+namespace GameAnalytics.Api.Controllers
 {
 
     [ApiController]
     [Route("api/[controller]")]
 
 
-    public class UsersController(HttpClient client, PlayerStatAnalyser _analyser, UserRepository _context, IRiotApiClient _riotApiService) : ControllerBase
+    public class UsersController(PlayerStatAnalyser _analyser, IUserRepository _context, IRiotApiClient _riotApiService) : ControllerBase
     {
        
 
@@ -45,7 +43,7 @@ namespace GameAnalytics.Controllers
 
         [HttpGet("profile/{gameName}/{tagLine}")]
 
-        public async Task<ActionResult<AccountData>> GetAccountInfo(string gameName, string tagLine)
+        public async Task<ActionResult<AccountInfo>> GetAccountInfo(string gameName, string tagLine)
         {
             var data = await _riotApiService.GetAccountInfo(gameName, tagLine);
 
@@ -67,7 +65,7 @@ namespace GameAnalytics.Controllers
 
 
         [HttpGet("match-details/{matchId}")]
-        public async Task<ActionResult<SingleMatchResponseDto>> GetMatchDetails(string matchId)
+        public async Task<ActionResult<MatchDetails>> GetMatchDetails(string matchId)
         {
             var matchDetails = await _riotApiService.GetMatchDetails(matchId);
 
