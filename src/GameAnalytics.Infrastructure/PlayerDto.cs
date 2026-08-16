@@ -15,7 +15,7 @@ namespace GameAnalytics.Infrastructure
 
         public PlayerStatsDto Stats { get; set; }
 
-        public PlayerPerformance Performance { get; set; }
+
 
     }
 
@@ -36,7 +36,7 @@ namespace GameAnalytics.Infrastructure
         public int Score { get; set; }
 
     }
-
+// TODO: wire up for H2H feature
     public class RoundDto
     {
         public int Id { get; set; }
@@ -46,13 +46,13 @@ namespace GameAnalytics.Infrastructure
         public string Winner { get; set; }
 
     }
-
+// TODO: wire up for H2H feature
     public class RoundPlayerStatsDto
     {
         public PlayerInfoDto Player { get; set; }
         public List<DamageEventDto> DamageEvents { get; set; }
     }
-
+// TODO: wire up for H2H feature
     public class PlayerInfoDto
     {
         public string Puuid { get; set; }
@@ -63,7 +63,7 @@ namespace GameAnalytics.Infrastructure
         public string Team { get; set; }
 
     }
-
+// TODO: wire up for H2H feature
     public class DamageEventDto
     {
         public PlayerInfoDto Player { get; set; }

@@ -4,18 +4,18 @@ namespace GameAnalytics.Infrastructure
 {
     public class MatchListDto
     {
-        public required List<MatchItemDto> Data{ get; set; }
+        public List<MatchItemDto> Data{ get; set; }
     }
     public class MatchItemDto
     {
-        public required MatchMetaDto MetaData {  get; set; }
+        public MatchMetaDto MetaData {  get; set; }
 
     }
 
     public class MatchMetaDto
     {
         [JsonPropertyName("match_id")]
-        public required string Id { get; set; }
+        public string Id { get; set; }
     }
 
 

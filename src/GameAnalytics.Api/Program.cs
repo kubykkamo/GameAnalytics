@@ -35,7 +35,7 @@ builder.Services.AddHttpClient<RiotApiService>(client =>
 builder.Services.AddScoped<IRiotApiClient>(sp => sp.GetRequiredService<RiotApiService>());
 
 builder.Services.AddScoped<PlayerStatAnalyser>();
-
+builder.Services.AddScoped<MatchAnalysisService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 

@@ -3,6 +3,7 @@ using GameAnalytics.Domain.Services;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Infrastructure;
 using GameAnalytics.Application;
+using System.Text.RegularExpressions;
 
 
 
@@ -13,7 +14,8 @@ namespace GameAnalytics.Api.Controllers
     [Route("api/[controller]")]
 
 
-    public class UsersController(PlayerStatAnalyser _analyser, IUserRepository _context, IRiotApiClient _riotApiService) : ControllerBase
+    public class UsersController(PlayerStatAnalyser _analyser, IUserRepository _context,
+     IRiotApiClient _riotApiService, MatchAnalysisService _matchAnalyser) : ControllerBase
     {
        
 
@@ -31,9 +33,9 @@ namespace GameAnalytics.Api.Controllers
         }
 
         [HttpGet("puuid/{gameName}/{tagLine}")]
-        public async Task<ActionResult<string>> GetUserId(string gameName, string tagLine)
+        public async Task<ActionResult<string>> GetId(string gameName, string tagLine)
         {
-            var puuid = await _riotApiService.GetUserId(gameName, tagLine);
+            var puuid = await _riotApiService.GetPlayerId(gameName, tagLine);
 
             return Ok(puuid);
 
@@ -76,10 +78,8 @@ namespace GameAnalytics.Api.Controllers
 
         [HttpGet("match-details/{matchId}/player-statistics/{gameName}/{tagLine}")]
 
-        public async Task<ActionResult<PlayerPerformance>> GetMatchStatistics(string matchId, string gameName, string tagLine)
+        public async Task<ActionResult<PlayerPerformance>> GetMatchStatistics(string matchId, string puuid)
         {
-
-            var puuid = await _riotApiService.GetUserId(gameName, tagLine);
 
             var playerStats = await _riotApiService.GetPlayerStats(matchId, puuid);
 
@@ -95,11 +95,10 @@ namespace GameAnalytics.Api.Controllers
 
         public async Task<ActionResult<PlayerPerformance>> GetRecentStats(string gameName, string tagLine)
         {
-            var puuid = await _riotApiService.GetUserId(gameName, tagLine);
-
+        
             var matches = await _riotApiService.GetMatches(gameName, tagLine);
 
-            var stats = await _riotApiService.GetRecentStats(matches, puuid);
+            var stats = await _matchAnalyser.GetRecentStats(matches, gameName, tagLine);
 
             return Ok(stats);
 
@@ -110,7 +109,7 @@ namespace GameAnalytics.Api.Controllers
 
         public async Task<ActionResult<List<string>>> GetMatchesByAgent(string gameName, string tagLine, string agentName)
         {
-            var matches = await _riotApiService.GetMatchesByAgent(gameName, tagLine, agentName);
+            var matches = await _matchAnalyser.GetMatchesByAgent(gameName, tagLine, agentName);
 
             return Ok(matches);
         }
