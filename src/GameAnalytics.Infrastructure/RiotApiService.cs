@@ -8,16 +8,14 @@ using GameAnalytics.Application;
 namespace GameAnalytics.Infrastructure
 {
     public class RiotApiService(
-    HttpClient _httpClient, 
-    IConfiguration _configuration, 
-    PlayerStatAnalyser _analyser, 
+    HttpClient _httpClient,   
     ILogger<RiotApiService> _logger) : IRiotApiClient
     {
         
 
         
 
-        public async Task<string> GetUserId(string gameName, string tagLine)
+        public async Task<string> GetPlayerId(string gameName, string tagLine)
         {
             var safeGameName = Uri.EscapeDataString(gameName);
             var safeTagLine = Uri.EscapeDataString(tagLine);
@@ -26,9 +24,21 @@ namespace GameAnalytics.Infrastructure
             var response = await _httpClient.GetAsync(url);
 
             JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            return doc.RootElement.GetProperty("data").GetProperty("puuid").GetString();
+            
+            if(!doc.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("puuid", out var puuidProperty))
+            {
+                throw new NotFoundException($"Could not find a Valorant account for {gameName}#{tagLine}.");
+            }
+            var puuid = puuidProperty.GetString();
 
-
+            if(string.IsNullOrEmpty(puuid))
+            {
+                _logger.LogWarning("External api returned an empty puuid for {gameName}#{tagLine}", safeGameName, safeTagLine);
+                throw new NotFoundException($"Could not find a Valorant account for {gameName}#{tagLine}.");
+            }
+            _logger.LogInformation("Successfully fetched PUUID for {GameName}#{TagLine}", safeGameName, safeTagLine);
+            
+            return puuid;
         }
         public async Task<List<string>> GetMatches(string gameName, string tagLine)
         {
@@ -47,9 +57,11 @@ namespace GameAnalytics.Infrastructure
 
             var matchList = JsonSerializer.Deserialize<MatchListDto>(jsonString, options);
 
+            if (matchList?.Data == null) throw new InvalidOperationException("External api returned an unexpected empty match list.");
+
             var readyList = matchList.Data.Select(x => x.MetaData.Id).ToList();
 
-           
+           _logger.LogInformation("Found {Count} matches for player {GameName}#{TagLine}", readyList.Count, safeGameName, safeTagLine);
 
             return readyList;
         }
@@ -68,7 +80,9 @@ namespace GameAnalytics.Infrastructure
             var jsonString = await response.Content.ReadAsStringAsync();
             var raw = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
 
-             return new MatchDetails
+            if (raw?.Data is null) throw new InvalidOperationException("External api returned an unexpected empty match details.");
+
+            var matchDetails = new MatchDetails
             {
                 MatchId = raw.Data.Metadata.MatchId,
                 MapName = raw.Data.Metadata.Map?.Name ?? "",
@@ -91,22 +105,27 @@ namespace GameAnalytics.Infrastructure
                     }
                 }
                 ).ToList()
-
             };
+            
+
+            _logger.LogInformation("Successfully fetched match: {MatchId}", matchId);
+            return matchDetails;
         }
 
         public async Task<PlayerStats> GetPlayerStats(string matchId, string puuid)
         {
             ArgumentException.ThrowIfNullOrEmpty(matchId);
-            ArgumentException.ThrowIfNullOrEmpty(puuid);
             var safeMatchId = Uri.EscapeDataString(matchId);
-
-
+     
             var matchDetails = await GetMatchDetails(safeMatchId);
 
             var player = matchDetails.Players.FirstOrDefault(p => p.Puuid == puuid);
 
-            return player?.Stats ?? new PlayerStats ();
+            var stats = player?.Stats ?? new PlayerStats ();
+
+            _logger.LogInformation("Successfully fetched ");
+
+            return stats;
         }
 
         public async Task<AccountInfo> GetAccountInfo(string gameName, string tagLine)
@@ -123,8 +142,9 @@ namespace GameAnalytics.Infrastructure
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var raw = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
 
-            return new AccountInfo
-            {
+             if (raw?.Data is null) throw new InvalidOperationException("External api returned an unexpected empty account details.");
+
+            var accountInfo = new AccountInfo{
                 Card = raw.Data.Card ?? "",
 
                 AccountLevel = raw.Data.AccountLevel,
@@ -132,72 +152,12 @@ namespace GameAnalytics.Infrastructure
                 Puuid = raw.Data.Puuid ?? ""
             };
 
+            _logger.LogInformation("Successfully fetched account information about {GameName}#{TagLine}.", safeGameName, safeTagLine);
+
+            return accountInfo;
         }
 
-        public async Task<List<PlayerPerformance>> GetRecentStats(List<string> matches, string puuid)
-        {
-            var stats = new List<PlayerPerformance>();
 
-
-            matches = matches.Take(10).ToList();
-
-            int count = 0;
-            foreach (string match in matches)
-            {
-                _logger.LogInformation("Fetching match {match}", match);
-
-                var matchStats = await GetPlayerStats(match, puuid);
-
-                if (matchStats == null)
-                {
-                    continue;
-                }
-
-                var playerPerformance = _analyser.CalculateMatchStatistics(matchStats);
-
-                stats.Add(playerPerformance);
-
-                count++;
-
-            }
-
-            _logger.LogInformation("Stats created from {count} matches for user: {puuid}.", count, puuid);
-
-            return stats;
-
-        }
-
-        public async Task<List<string>> GetMatchesByAgent(string gameName, string tagLine, string agentName)
-        {
-
-            List<string> matches = new List<string>();
-
-            var loweredAgentName = agentName.ToLower();
-
-
-            string puuid = await GetUserId(gameName, tagLine);
-
-            var matchHistory = await GetMatches(gameName, tagLine);
-
-
-            foreach (var match in matchHistory)
-            {
-                var matchDetails = await GetMatchDetails(match);
-
-                bool hasAgent = matchDetails.Players.Any(p => p.Puuid == puuid && p.AgentName.ToLower() == loweredAgentName);
-
-                if (hasAgent)
-                {
-                    matches.Add(matchDetails.MatchId);
-                }
-            }
-
-            if (!matches.Any()) throw new NotFoundException("No matches found with this agent.");
-
-            return matches;
-        }
-
-        
 
     }
 }
