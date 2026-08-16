@@ -19,10 +19,16 @@ public class GlobalExceptionHandler : IExceptionHandler
 
             };
 
+            var errorTitle = exception switch
+            {
+                NotFoundException => "Not Found",
+                _ => "Something went wrong"
+            };
+
             var problemDetails = new ProblemDetails
             {
                 Status = statusCode,
-                Title = "Something went wrong",
+                Title = errorTitle,
                 Detail = $"{exception.Message}",
             };
 
