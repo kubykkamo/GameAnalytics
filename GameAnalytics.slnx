@@ -5,4 +5,7 @@
     <Project Path="src/GameAnalytics.Domain/GameAnalytics.Domain.csproj" />
     <Project Path="src/GameAnalytics.Infrastructure/GameAnalytics.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GameAnalytics.Domain.Tests/GameAnalytics.Domain.Tests.csproj" />
+  </Folder>
 </Solution>
