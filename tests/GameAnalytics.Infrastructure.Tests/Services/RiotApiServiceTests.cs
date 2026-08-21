@@ -70,4 +70,43 @@ public class RiotApiServiceTests
         
         await Assert.ThrowsAsync<NotFoundException>(() => _service.GetPlayerId("Unknown", "0000"));
     }
+
+    [Fact]
+    public async Task GetAccountInfo_ValidData_ReturnsAccountInfo()
+    {
+        
+        var json = """
+        {
+            "data": {
+                "puuid": "id-12345",
+                "account_level": 150,
+                "card": "some-card-id"
+            }
+        }
+        """;
+        
+        SetFalseResponse(HttpStatusCode.OK, json);
+             
+        var result = await _service.GetAccountInfo("Player", "1234");
+ 
+        Assert.NotNull(result);
+        Assert.Equal("id-12345", result.Puuid);
+        Assert.Equal(150, result.AccountLevel);
+        Assert.Equal("some-card-id", result.Card);
+    }
+
+    [Fact]
+    public async Task GetAccountInfo_NullData_ThrowsInvalidOperationException()
+    {
+        var json = """
+        {
+            "data": null
+        }
+        """;
+        
+        SetFalseResponse(HttpStatusCode.OK, json);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            _service.GetAccountInfo("Player", "1234"));
+    }
 }
