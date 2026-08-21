@@ -76,7 +76,7 @@ namespace GameAnalytics.Api.Controllers
         }
 
 
-        [HttpGet("match-details/{matchId}/player-statistics/{gameName}/{tagLine}")]
+        [HttpGet("match-details/{matchId}/player-statistics/{puuid}")]
 
         public async Task<ActionResult<PlayerPerformance>> GetMatchStatistics(string matchId, string puuid)
         {
