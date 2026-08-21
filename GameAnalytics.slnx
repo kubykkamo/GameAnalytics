@@ -7,5 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/GameAnalytics.Domain.Tests/GameAnalytics.Domain.Tests.csproj" />
+    <Project Path="tests/GameAnalytics.Infrastructure.Tests/GameAnalytics.Infrastructure.Tests.csproj" />
   </Folder>
 </Solution>

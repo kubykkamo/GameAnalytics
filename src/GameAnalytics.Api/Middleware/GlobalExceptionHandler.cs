@@ -15,6 +15,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             var statusCode = exception switch
             {
                 NotFoundException => StatusCodes.Status404NotFound,
+                UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
                 _ => StatusCodes.Status500InternalServerError,
 
             };
@@ -22,6 +23,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             var errorTitle = exception switch
             {
                 NotFoundException => "Not Found",
+                UnauthorizedAccessException => "Unauthorized",
                 _ => "Something went wrong"
             };
 
@@ -29,7 +31,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             {
                 Status = statusCode,
                 Title = errorTitle,
-                Detail = $"{exception.Message}",
+                Detail = $"Global Handler: {exception.Message}",
             };
 
             httpcontext.Response.StatusCode = statusCode;

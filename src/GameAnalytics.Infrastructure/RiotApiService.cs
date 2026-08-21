@@ -1,12 +1,9 @@
 ﻿using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using GameAnalytics.Domain.Services;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Domain.Exceptions;
 using GameAnalytics.Application;
-namespace GameAnalytics.Infrastructure
-{
+namespace GameAnalytics.Infrastructure;
     public class RiotApiService(
     HttpClient _httpClient,   
     ILogger<RiotApiService> _logger) : IRiotApiClient
@@ -160,4 +157,3 @@ namespace GameAnalytics.Infrastructure
 
 
     }
-}
