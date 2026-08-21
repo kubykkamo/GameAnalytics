@@ -64,5 +64,19 @@ public class PlayerStatAnalyserTests
         Assert.Equal(expected, result);
     }
 
+    [Fact]
+    public void CalculateMatchStatistics_ReturnsCorrectlyAssembledPerformance()
+    {
+        var playerStats = new PlayerStats { Kills = 20, Deaths = 5, Assists = 5, Headshots = 10, Bodyshots = 10, Legshots = 10 };
+
+        var result = _analyser.CalculateMatchStatistics(playerStats);
+
+        Assert.Equal(4, result.KdRatio);
+        Assert.Equal(5, result.KdaRatio);
+        Assert.Equal(33.3, result.HeadshotPercentage);
+        Assert.Equal(20, result.Kills);
+        Assert.Equal(5, result.Deaths);
+        Assert.Equal(5, result.Assists);
+    }
 
 }

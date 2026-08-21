@@ -5,11 +5,6 @@ namespace GameAnalytics.Domain.Services
     {
 
 
-        public PlayerStatAnalyser() 
-        {
-            
-        }
-
         public double HeadshotPercentage(PlayerStats playerStats)
         {
             var totalShots = playerStats.Headshots + playerStats.Bodyshots + playerStats.Legshots;
