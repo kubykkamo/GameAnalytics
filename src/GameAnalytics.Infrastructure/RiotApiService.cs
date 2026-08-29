@@ -77,6 +77,7 @@ namespace GameAnalytics.Infrastructure;
             var jsonString = await response.Content.ReadAsStringAsync();
             var raw = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
 
+            
             if (raw?.Data is null) throw new InvalidOperationException("External api returned an unexpected empty match details.");
 
             var matchDetails = new MatchDetails
