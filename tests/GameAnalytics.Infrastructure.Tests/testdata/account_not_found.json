@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": 22,
+      "message": "Account not found",
+      "status": 404,
+      "details": null
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "errors": [
+    {
+      "code": 26,
+      "message": "Match not found",
+      "status": 404,
+      "details": null
+    }
+  ]
+}
