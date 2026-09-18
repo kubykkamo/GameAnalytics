@@ -11,7 +11,9 @@ namespace GameAnalytics.Infrastructure
     public class SingleMatchResponseDto
     {
         public  MatchDataDto Data { get; set; }
-        }
+        [JsonPropertyName("errors")]
+        public List<HenrikErrorDto>? Errors { get; set; }
+    }
 
     public class MatchDataDto
     {
@@ -62,6 +64,8 @@ namespace GameAnalytics.Infrastructure
     public class AccountResponseDto 
     { 
         public AccountData Data { get; set; }
+        [JsonPropertyName("errors")]
+        public List<HenrikErrorDto>? Errors { get; set; }
     }
 
     public class AccountData 
@@ -73,5 +77,14 @@ namespace GameAnalytics.Infrastructure
     
     }
 
+    public class HenrikErrorDto
+    {
+        [JsonPropertyName("code")]
+        public int Code { get; set; }
 
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
+    }
+
+    
 }

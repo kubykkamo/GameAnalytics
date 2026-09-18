@@ -5,6 +5,10 @@ namespace GameAnalytics.Infrastructure
     public class MatchListDto
     {
         public List<MatchItemDto> Data{ get; set; }
+        
+        [JsonPropertyName("errors")]
+        public List<HenrikErrorDto>? Errors { get; set; }
+
     }
     public class MatchItemDto
     {

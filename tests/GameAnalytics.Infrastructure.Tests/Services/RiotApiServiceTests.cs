@@ -91,7 +91,7 @@ public class RiotApiServiceTests
     }
 
     [Fact]
-    public async Task GetAccountInfo_NullData_ThrowsInvalidOperationException()
+    public async Task GetAccountInfo_NullData_ThrowsNotFoundException()
     {
         var json = """
         {
@@ -101,7 +101,7 @@ public class RiotApiServiceTests
         
         SetFalseResponse(HttpStatusCode.OK, json);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<NotFoundException>(() => 
             _service.GetAccountInfo("Player", "1234"));
     }
 
@@ -151,7 +151,7 @@ public class RiotApiServiceTests
         SetFalseResponse(HttpStatusCode.OK, json);
 
         
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+        await Assert.ThrowsAsync<NotFoundException>(() => 
             _service.GetMatchDetails("match_id123"));
     }
 }
