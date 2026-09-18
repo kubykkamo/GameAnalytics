@@ -1,14 +1,30 @@
 ﻿using System.Text.Json;
+using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Domain.Exceptions;
 using GameAnalytics.Application;
+using System.Text.RegularExpressions;
 namespace GameAnalytics.Infrastructure;
     public class RiotApiService(
     HttpClient _httpClient,   
     ILogger<RiotApiService> _logger) : IRiotApiClient
     {
-        
+        private void EnsureValidHenrikResponse(List<HenrikErrorDto>? errors, bool hasData, string notFoundMessage)
+        {
+            if (errors is { Count: > 0 })
+            {
+                _logger.LogWarning("External API returned an error in JSON body: {Message}", errors[0].Message);
+                throw new NotFoundException($"{notFoundMessage} Detail: {errors[0].Message}");
+            }
+
+            if (!hasData)
+            {
+                _logger.LogWarning("External API returned 200 OK, but 'data' is null.");
+                throw new NotFoundException(notFoundMessage);
+            }
+
+        }
 
         
 
@@ -20,19 +36,22 @@ namespace GameAnalytics.Infrastructure;
 
             var response = await _httpClient.GetAsync(url);
 
-            JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            
-            if(!doc.RootElement.TryGetProperty("data", out var data) || !data.TryGetProperty("puuid", out var puuidProperty))
-            {
-                throw new NotFoundException($"Could not find a Valorant account for {gameName}#{tagLine}.");
-            }
-            var puuid = puuidProperty.GetString();
+            var raw = await response.Content.ReadFromJsonAsync<AccountResponseDto>();
 
-            if(string.IsNullOrEmpty(puuid))
+            EnsureValidHenrikResponse(
+                errors: raw?.Errors,
+                hasData: raw?.Data != null,
+                notFoundMessage: $"Could not find a Valorant account for {gameName}#{tagLine}."
+            );
+
+            var puuid = raw!.Data.Puuid;
+
+            if (string.IsNullOrEmpty(puuid))
             {
                 _logger.LogWarning("External api returned an empty puuid for {gameName}#{tagLine}", safeGameName, safeTagLine);
                 throw new NotFoundException($"Could not find a Valorant account for {gameName}#{tagLine}.");
             }
+
             _logger.LogInformation("Successfully fetched PUUID for {GameName}#{TagLine}", safeGameName, safeTagLine);
             
             return puuid;
@@ -78,7 +97,11 @@ namespace GameAnalytics.Infrastructure;
             var raw = JsonSerializer.Deserialize<SingleMatchResponseDto>(jsonString, options);
 
             
-            if (raw?.Data is null) throw new InvalidOperationException("External api returned an unexpected empty match details.");
+            EnsureValidHenrikResponse(
+                errors: raw?.Errors,
+                hasData: raw?.Data is not null,
+                notFoundMessage: $"Could not find match {matchId}"
+            );
 
             var matchDetails = new MatchDetails
             {
@@ -140,7 +163,10 @@ namespace GameAnalytics.Infrastructure;
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var raw = JsonSerializer.Deserialize<AccountResponseDto>(jsonString, options);
 
-             if (raw?.Data is null) throw new InvalidOperationException("External api returned an unexpected empty account details.");
+            EnsureValidHenrikResponse(
+                errors: raw?.Errors,
+                hasData: raw?.Data is not null,
+                notFoundMessage: $"Could not find account {gameName}#{tagLine}");
 
             var accountInfo = new AccountInfo{
                 Card = raw.Data.Card ?? "",
