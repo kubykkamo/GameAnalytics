@@ -43,15 +43,15 @@ namespace GameAnalytics.Infrastructure
             throw response.StatusCode switch
             {
                 System.Net.HttpStatusCode.NotFound =>
-                    new NotFoundException($"Henrik API 404 at [{failedUrl}]. Details: {errorContent}"),
+                    new NotFoundException("The requested resource could not be found."),
 
                 System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden =>
-                    new UnauthorizedAccessException($"Henrik API Auth Error at [{failedUrl}]. Key invalid."),
+                    new UnauthorizedAccessException("External API authorization failed."),
 
                 System.Net.HttpStatusCode.TooManyRequests =>
-                    new HttpRequestException("Rate limit exceeded on Henrik API."),
+                    new HttpRequestException("Rate limit exceeded on the external API."),
 
-                _ => new HttpRequestException($"Henrik API error {(int)response.StatusCode} at [{failedUrl}]. Details: {errorContent}")
+                _ => new HttpRequestException("An error occurred while communicating with the external service.")
             };
         }
     }
