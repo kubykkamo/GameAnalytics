@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using GameAnalytics.Domain.Entities;
 using GameAnalytics.Domain.Exceptions;
 using GameAnalytics.Application;
-using System.Text.RegularExpressions;
 namespace GameAnalytics.Infrastructure;
     public class RiotApiService(
     HttpClient _httpClient,   
@@ -45,12 +44,6 @@ namespace GameAnalytics.Infrastructure;
             );
 
             var puuid = raw!.Data.Puuid;
-
-            if (string.IsNullOrEmpty(puuid))
-            {
-                _logger.LogWarning("External api returned an empty puuid for {gameName}#{tagLine}", safeGameName, safeTagLine);
-                throw new NotFoundException($"Could not find a Valorant account for {gameName}#{tagLine}.");
-            }
 
             _logger.LogInformation("Successfully fetched PUUID for {GameName}#{TagLine}", safeGameName, safeTagLine);
             

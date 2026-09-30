@@ -7,6 +7,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
   </PackageReference>
 <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
+<PackageReference Include="System.Threading.RateLimiting" Version="10.0.12" />
     <ProjectReference Include="..\GameAnalytics.Application\GameAnalytics.Application.csproj" />
   </ItemGroup>
 
