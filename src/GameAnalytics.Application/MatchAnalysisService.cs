@@ -3,8 +3,10 @@ using GameAnalytics.Domain.Exceptions;
 using GameAnalytics.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
-namespace GameAnalytics.Application
-{
+
+
+namespace GameAnalytics.Application;
+
     public class MatchAnalysisService(IRiotApiClient _riotApiService, PlayerStatAnalyser _analyser, ILogger<MatchAnalysisService> _logger)
     {
         public async Task<List<PlayerPerformance>> GetRecentStats(List<string> matches, string gameName, string tagLine)
@@ -73,4 +75,3 @@ namespace GameAnalytics.Application
         }
 
     }
-}
