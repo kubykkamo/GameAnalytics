@@ -4,6 +4,8 @@ using GameAnalytics.Domain.Services;
 using GameAnalytics.Infrastructure;
 using GameAnalytics.Application;
 using GameAnalytics.Middleware;
+using System.Threading.RateLimiting;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,14 +25,28 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddTransient<ExternalApiErrorHandler>();
 
+var rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
+{
+    TokenLimit = 30,
+    TokensPerPeriod = 30,
+    ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+    AutoReplenishment = true,
+    QueueLimit = 100,
+    QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+});
+builder.Services.AddTransient(sp => new ClientRateLimitingHandler(rateLimiter));
 
 var apiKey = builder.Configuration["RiotApi:HenrikApiKey"];
-
-builder.Services.AddHttpClient<RiotApiService>(client => 
+builder.Services.AddHttpClient<IRiotApiClient, RiotApiService>(client => 
 {
     client.DefaultRequestHeaders.Add("Authorization", apiKey);
+    client.BaseAddress = new Uri("https://api.henrikdev.xyz");
 })
-    .AddHttpMessageHandler<ExternalApiErrorHandler>();
+.AddHttpMessageHandler<ExternalApiErrorHandler>()
+.AddHttpMessageHandler<ClientRateLimitingHandler>();
+
+
+builder.Services.AddTransient(sp => new ClientRateLimitingHandler(rateLimiter));
 
 builder.Services.AddScoped<IRiotApiClient>(sp => sp.GetRequiredService<RiotApiService>());
 
@@ -43,17 +59,11 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-
-
-
-
 
 app.MapControllers();
 
