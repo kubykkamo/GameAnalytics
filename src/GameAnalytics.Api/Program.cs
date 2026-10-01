@@ -45,11 +45,6 @@ builder.Services.AddHttpClient<IRiotApiClient, RiotApiService>(client =>
 .AddHttpMessageHandler<ExternalApiErrorHandler>()
 .AddHttpMessageHandler<ClientRateLimitingHandler>();
 
-
-builder.Services.AddTransient(sp => new ClientRateLimitingHandler(rateLimiter));
-
-builder.Services.AddScoped<IRiotApiClient>(sp => sp.GetRequiredService<RiotApiService>());
-
 builder.Services.AddScoped<PlayerStatAnalyser>();
 builder.Services.AddScoped<MatchAnalysisService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
