@@ -66,6 +66,8 @@ Generated\ Files/
 [Bb]uild[Ll]og.*
 *.trx
 
+**appsettings.Development.json
+
 # NUnit
 *.VisualState.xml
 TestResult.xml
