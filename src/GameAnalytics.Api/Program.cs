@@ -36,7 +36,7 @@ var rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
 });
 builder.Services.AddTransient(sp => new ClientRateLimitingHandler(rateLimiter));
 
-var apiKey = builder.Configuration["RiotApi:HenrikApiKey"];
+var apiKey = builder.Configuration["HenrikApi:ApiKey"];
 builder.Services.AddHttpClient<IRiotApiClient, RiotApiService>(client => 
 {
     client.DefaultRequestHeaders.Add("Authorization", apiKey);
