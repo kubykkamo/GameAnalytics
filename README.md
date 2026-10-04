@@ -37,7 +37,7 @@ Each layer has a specific job - keeps things organized and testable.
 
 ### What You Need
 - .NET 10 SDK ([download here](https://dotnet.microsoft.com/download))
-- A Riot API key ([get one free here](https://developer.riotgames.com))
+- A Riot (unofficial) API key ([get one free here](https://docs.henrikdev.xyz/general/auth))
 - Docker (optional, for running containerized)
 
 ### Running Locally
