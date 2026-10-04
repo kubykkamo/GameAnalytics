@@ -27,14 +27,15 @@ builder.Services.AddTransient<ExternalApiErrorHandler>();
 
 var rateLimiter = new TokenBucketRateLimiter(new TokenBucketRateLimiterOptions
 {
-    TokenLimit = 30,
-    TokensPerPeriod = 30,
+    TokenLimit = 15,
+    TokensPerPeriod = 15,
     ReplenishmentPeriod = TimeSpan.FromMinutes(1),
     AutoReplenishment = true,
     QueueLimit = 100,
     QueueProcessingOrder = QueueProcessingOrder.OldestFirst
 });
-builder.Services.AddTransient(sp => new ClientRateLimitingHandler(rateLimiter));
+
+builder.Services.AddTransient(sp => new ClientRateLimitingHandler(rateLimiter, sp.GetRequiredService<ILogger<ClientRateLimitingHandler>>()));
 
 var apiKey = builder.Configuration["HenrikApi:ApiKey"];
 builder.Services.AddHttpClient<IRiotApiClient, RiotApiService>(client => 
@@ -52,13 +53,18 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 
+var klic = builder.Configuration["HenrikApi:ApiKey"]; 
+
+app.Logger.LogInformation("STARTUP CHECK - Klic v cloudu: Nacteno={IsLoaded}, Delka={Length}", 
+    !string.IsNullOrEmpty(klic), 
+    klic?.Length ?? 0);
+
 app.UseExceptionHandler();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
 
 app.MapControllers();
 

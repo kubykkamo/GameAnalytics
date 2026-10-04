@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using GameAnalytics.Domain.Exceptions;
+using GameAnalytics.Infrastructure.Exceptions;
 namespace GameAnalytics.Middleware{
 public class GlobalExceptionHandler : IExceptionHandler
     {
@@ -16,6 +17,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             {
                 NotFoundException => StatusCodes.Status404NotFound,
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                ExternalApiLimitException => StatusCodes.Status503ServiceUnavailable,
                 _ => StatusCodes.Status500InternalServerError,
 
             };
@@ -24,6 +26,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             {
                 NotFoundException => "Not Found",
                 UnauthorizedAccessException => "Unauthorized",
+                ExternalApiLimitException => "Service Unavailable",
                 _ => "Something went wrong"
             };
 
